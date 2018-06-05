@@ -50,10 +50,11 @@
                     <th>Hashrate</th>
                 </tr>
                 </thead>
-                {{ for(var worker in it.stats.pools[pool].workers) { }}
-                   {{var workerstat = it.stats.pools[pool].workers[worker];}}
+                {{ var sortedWorkerNames = Object.keys(it.stats.pools[pool].workers).sort(); }}
+                {{ for(let i = 0; i < sortedWorkerNames.length; i++) { }}
+                   {{var workerstat = it.stats.pools[pool].workers[sortedWorkerNames[i]];}}
                     <tr class="pure-table-odd">
-                        <td>{{=worker}}</td>
+                        <td>{{=sortedWorkerNames[i]}}</td>
                         <td>{{=Math.floor(workerstat.shares)}}</td>
                         <td>{{=Math.floor(workerstat.invalidshares)}}</td>
                         <td>{{? workerstat.shares > 0}} {{=Math.floor(10000 * workerstat.shares / (workerstat.shares + workerstat.invalidshares)) / 100}}% {{??}} 0% {{?}}</td>
