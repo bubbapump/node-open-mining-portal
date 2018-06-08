@@ -383,7 +383,15 @@ function SetupForPool(logger, poolOptions, setupFinished){
                                 address = address.split("_")[0];
                             }
                             worker.address = (worker.address || getProperAddress(address));
-                            worker.sent = addressAmounts[address] = satoshisToCoins(toSend);
+                            var coinAmountToSend = satoshisToCoins(toSend);
+                            // add up amount for miners that use the same address but have a different name ('password')
+                            if (addressAmounts.hasOwnProperty(address)) {
+                                addressAmounts[address] += coinAmountToSend;
+                            } else {
+                                addressAmounts[address] = coinAmountToSend;
+                            }
+
+                            worker.sent = coinAmountToSend;
                             worker.balanceChange = Math.min(worker.balance, toSend) * -1;
                         }
                         else {
