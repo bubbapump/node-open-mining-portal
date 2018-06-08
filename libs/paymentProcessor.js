@@ -383,17 +383,15 @@ function SetupForPool(logger, poolOptions, setupFinished){
                                 address = address.split("_")[0];
                             }
                             worker.address = (worker.address || getProperAddress(address));
-                            let coinAmountToSend = satoshisToCoins(toSend);
-                            console.log("toSend for address " + address + " is " + toSend + " and coinAmount is " + coinAmountToSend);
 
                             // add up amount for miners that use the same address but have a different name ('password')
                             if (addressAmounts.hasOwnProperty(address)) {
-                                addressAmounts[address] += coinAmountToSend;
+                                addressAmounts[address] += toSend;
                             } else {
-                                addressAmounts[address] = coinAmountToSend;
+                                addressAmounts[address] = toSend;
                             }
 
-                            worker.sent = coinAmountToSend;
+                            worker.sent = satoshisToCoins(toSend);
                             worker.balanceChange = Math.min(worker.balance, toSend) * -1;
                         }
                         else {
@@ -407,6 +405,11 @@ function SetupForPool(logger, poolOptions, setupFinished){
                     if (Object.keys(addressAmounts).length === 0){
                         callback(null, workers, rounds);
                         return;
+                    }
+
+                    // convert all amounts to coin ammounts now
+                    for (var address in addressAmounts) {
+                        addressAmounts[address] = satoshisToCoins(addressAmounts[address]);
                     }
 
                     daemon.cmd('sendmany', [addressAccount || '', addressAmounts], function (result) {
