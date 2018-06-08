@@ -400,8 +400,6 @@ function SetupForPool(logger, poolOptions, setupFinished){
                         }
                     }
 
-                    console.log("address amounts is ", addressAmounts);
-
                     if (Object.keys(addressAmounts).length === 0){
                         callback(null, workers, rounds);
                         return;
@@ -411,6 +409,7 @@ function SetupForPool(logger, poolOptions, setupFinished){
                     for (var address in addressAmounts) {
                         addressAmounts[address] = satoshisToCoins(addressAmounts[address]);
                     }
+                    console.log("address amounts is ", addressAmounts);
 
                     daemon.cmd('sendmany', [addressAccount || '', addressAmounts], function (result) {
                         //Check if payments failed because wallet doesn't have enough coins to pay for tx fees
