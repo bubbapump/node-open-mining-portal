@@ -69,10 +69,12 @@ module.exports = function(logger, poolConfig){
     this.handleShare = function(isValidShare, isValidBlock, shareData){
 
         var redisCommands = [];
-
+        let dateNow = Date.now();
         if (isValidShare){
             redisCommands.push(['hincrbyfloat', coin + ':shares:roundCurrent', shareData.worker, shareData.difficulty]);
             redisCommands.push(['hincrby', coin + ':stats', 'validShares', 1]);
+            let validShareHistoryData = [shareData.worker, dateNow];
+            redisCommands.push(['zadd', coin + ':shareHistory', dateNow / 1000 | 0, validShareHistoryData.join(':')]);
         }
         else{
             redisCommands.push(['hincrby', coin + ':stats', 'invalidShares', 1]);
@@ -80,14 +82,22 @@ module.exports = function(logger, poolConfig){
         /* Stores share diff, worker, and unique value with a score that is the timestamp. Unique value ensures it
            doesn't overwrite an existing entry, and timestamp as score lets us query shares from last X minutes to
            generate hashrate for each worker and pool. */
-        var dateNow = Date.now();
         var hashrateData = [ isValidShare ? shareData.difficulty : -shareData.difficulty, shareData.worker, dateNow];
         redisCommands.push(['zadd', coin + ':hashrate', dateNow / 1000 | 0, hashrateData.join(':')]);
 
         if (isValidBlock){
-            redisCommands.push(['rename', coin + ':shares:roundCurrent', coin + ':shares:round' + shareData.height]);
-            redisCommands.push(['sadd', coin + ':blocksPending', [shareData.blockHash, shareData.txHash, shareData.height].join(':')]);
-            redisCommands.push(['hincrby', coin + ':stats', 'validBlocks', 1]);
+            connection.hget(coin + ":stats", 'validShares', function(err, replies) {
+                if (err) {
+                    console.log("Error getting validShares total", err);
+                }
+                
+                let validShareTotalToNow = err ? "err" : replies[0];
+                redisCommands.push(['rename', coin + ':shares:roundCurrent', coin + ':shares:round' + shareData.height]);
+                redisCommands.push(['sadd', coin + ':blocksPending', [shareData.blockHash, shareData.txHash, shareData.height].join(':')]);
+                redisCommands.push(['hincrby', coin + ':stats', 'validBlocks', 1]);
+                let blockHistoryData = [shareData.worker, validShareTotalToNow, dateNow];
+                redisCommands.push(['zadd', coin + ':blockHistory', dateNow / 1000 | 0, blockHistoryData.join(':')]);
+            });
         }
         else if (shareData.blockHash){
             redisCommands.push(['hincrby', coin + ':stats', 'invalidBlocks', 1]);
