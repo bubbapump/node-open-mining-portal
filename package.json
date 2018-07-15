@@ -31,22 +31,23 @@
         "url": "https://github.com/bubbapump/node-open-mining-portal.git"
     },
     "dependencies": {
-        "stratum-pool": "file:../node-stratum-pool",
-        "dateformat": "1.0.12",
-        "node-json-minify": "*",
-        "redis": "0.12.1",
-        "mysql": "*",
         "async": "1.5.2",
-        "express": "*",
-        "body-parser": "*",
-        "compression": "*",
-        "dot": "*",
-        "colors": "*",
-        "node-watch": "*",
-        "request": "2.69.0",
-        "nonce": "*",
         "bignum": "0.12.5",
-        "extend": "*"
+        "body-parser": "*",
+        "colors": "*",
+        "compression": "*",
+        "dateformat": "1.0.12",
+        "dot": "*",
+        "express": "*",
+        "extend": "*",
+        "mysql": "*",
+        "node-json-minify": "*",
+        "node-watch": "*",
+        "nonce": "*",
+        "pg": "^7.4.3",
+        "redis": "0.12.1",
+        "request": "2.69.0",
+        "stratum-pool": "file:../node-stratum-pool"
     },
     "engines": {
         "node": ">=0.10"

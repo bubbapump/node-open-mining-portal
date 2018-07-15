@@ -1,8 +1,6 @@
 var redis = require('redis');
 var Stratum = require('stratum-pool');
 
-
-
 /*
 This module deals with handling shares when in internal payment processing mode. It connects to a redis
 database and inserts shares with the database structure of:
@@ -19,6 +17,7 @@ module.exports = function(logger, poolConfig){
 
     var redisConfig = poolConfig.redis;
     var coin = poolConfig.coin.name;
+    const { Pool } = require('pg');
 
 
     var forkId = process.env.forkId;
@@ -65,7 +64,6 @@ module.exports = function(logger, poolConfig){
         }
     });
 
-
     this.handleShare = function(isValidShare, isValidBlock, shareData){
 
         var redisCommands = [];
@@ -94,11 +92,48 @@ module.exports = function(logger, poolConfig){
         }
 
         connection.multi(redisCommands).exec(function(err, replies){
-            if (err)
+            if (err) {
                 logger.error(logSystem, logComponent, logSubCat, 'Error with share processor multi ' + JSON.stringify(err));
+            }
+
+            console.log("logging share to db");
+            // uses environment variables for connection info.
+            const conn = new Pool();
+            
+            conn.query('insert into share_history (ts, worker_name, pool_difficulty, is_valid) values (now(), $1, $2, $3)', 
+                [shareData.worker, shareData.difficulty, isValidShare])
+            .catch(err => {
+                logger.error(logSystem, logComponent, logSubCat, "Error writing share data to stats db " + err);
+                return new Promise();
+            })
+            .then(res => {
+                // if block is invalid, there will be a blockHash and isValidBlock will be false. If isValidBlock is false and there is
+                // not blockHash, then we don't need to record anything.
+                if (isValidBlock || shareData.blockHash) {
+                    console.log("logging block to db");
+                    return conn.query('insert into block_history (ts, worker_name, pool_difficulty, is_valid) values (now(), $1, $2, $3)', 
+                        [shareData.worker, shareData.difficulty, isValidBlock]);
+                } else {
+                    // nothing to do
+                    return new Promise((resolve, reject) => {
+                        resolve();
+                    });
+                }
+            })
+            .then(res => {
+                console.log("ending statsdb connection");
+                conn.end();
+                return new Promise((resolve, reject) => {
+                    resolve();
+                });
+        })
+            .catch(err => {
+                logger.error(logSystem, logComponent, logSubCat, "Error writing block data to stats db " + err);
+                conn.end();
+                return new Promise((resolve, reject) => {
+                    resolve();
+                });
+            });
         });
-
-
     };
-
 };
