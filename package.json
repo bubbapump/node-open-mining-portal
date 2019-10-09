@@ -47,7 +47,7 @@
         "pg": "^7.4.3",
         "redis": "0.12.1",
         "request": "2.69.0",
-        "stratum-pool": ""git://github.com/bubbapump/node-multi-hashing.git"
+        "stratum-pool": ""git://github.com/bubbapump/node-stratum-pool.git"
     },
     "engines": {
         "node": ">=0.10"
